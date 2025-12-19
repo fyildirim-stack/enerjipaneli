@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enerji Güvenliği ve Politikaları: Bütünleşik Veri Analiz Paneli (2000-2024)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 text-white p-2 rounded serif font-bold text-xl">FY</div>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">Enerji Güvenliği Doktora Tezi Veri
+                            Paneli</h1>
+                        <p class="text-xs text-slate-500 italic">Veri Kaynağı: Yıldırım, F. (2025) - Tablo 9-32 Tam Set
+                        </p>
+                    </div>
+                </div>
+                <!-- Timeline -->
+                <div
+                    class="flex items-center space-x-4 w-full lg:w-1/2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    <button id="playBtn"
+                        class="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow text-slate-700 hover:text-orange-600 font-bold transition">▶</button>
+                    <div class="flex-grow">
+                        <input type="range" min="2000" max="2024" value="2000" class="timeline-slider w-full"
+                            id="yearSlider">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono mt-1">
+                            <span>2000</span><span>2005</span><span>2010</span><span>2015</span><span>2020</span><span>2024</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold font-mono text-orange-600 w-16 text-center" id="displayYear">2000
+                    </div>
+                </div>
+                <!-- AI Button -->
+                <button onclick="analyzeWithAI()"
+                    class="ai-gradient px-4 py-2 rounded-lg shadow-md flex items-center gap-2 text-sm font-semibold hover:opacity-90 transition">
+                    <span>✨</span> YZ Analiz
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- AI PANEL -->
+    <div id="ai-panel" class="hidden max-w-7xl mx-auto px-4 mt-4">
+        <div class="bg-white p-6 rounded-xl border border-indigo-100 shadow-lg relative">
+            <button onclick="document.getElementById('ai-panel').classList.add('hidden')"
+                class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xl">&times;</button>
+            <h3 class="text-lg font-bold text-indigo-700 mb-2 flex items-center gap-2">🤖 <span
+                    id="ai-year-title"></span> Stratejik Değerlendirme</h3>
+            <div id="ai-loading" class="text-sm text-slate-500 italic animate-pulse">Analiz oluşturuluyor...</div>
+            <div id="ai-content" class="text-sm text-slate-700 leading-relaxed prose max-w-none mt-2"></div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <nav class="bg-white border-b border-slate-200 sticky top-[76px] z-40 overflow-x-auto shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-1 min-w-max">
+            <button onclick="openTab('tab-macro')"
+                class="tab-active px-4 py-3 text-sm font-bold transition flex items-center gap-2" id="btn-tab-macro">📊
+                Makro Analiz</button>
+            <button onclick="openTab('tab-elec')"
+                class="tab-inactive px-4 py-3 text-sm font-bold transition flex items-center gap-2" id="btn-tab-elec">⚡
+                Elektrik Piyasası</button>
+            <button onclick="openTab('tab-fossil')"
+                class="tab-inactive px-4 py-3 text-sm font-bold transition flex items-center gap-2"
+                id="btn-tab-fossil">🛢️ Fosil Yakıt Dengesi</button>
+            <button onclick="openTab('tab-geo')"
+                class="tab-inactive px-4 py-3 text-sm font-bold transition flex items-center gap-2" id="btn-tab-geo">🌍
+                Jeopolitik</button>
+            <button onclick="openTab('tab-indices')"
+                class="tab-inactive px-4 py-3 text-sm font-bold transition flex items-center gap-2"
+                id="btn-tab-indices">📈 Endeksler & Verimlilik</button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- 1. MACRO TAB -->
+        <div id="tab-macro" class="tab-pane w-full space-y-6 block">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Toplam Enerji Arzı (T.9)</div>
+                    <div class="text-2xl font-bold text-slate-800" id="macro-supply">--</div>
+                    <div class="text-xs text-slate-400">Exajoule</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Net İthalat Bağ. (T.31)</div>
+                    <div class="text-2xl font-bold text-red-600" id="macro-dep">--%</div>
+                    <div class="text-xs text-slate-400">Dışa Bağımlılık Oranı</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Yenilenebilir Arz Payı</div>
+                    <div class="text-2xl font-bold text-emerald-600" id="macro-renew-share">--%</div>
+                    <div class="text-xs text-slate-400">Toplam Arz İçindeki Payı</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">CO2 Emisyonu (T.9)</div>
+                    <div class="text-2xl font-bold text-slate-800" id="macro-co2">--</div>
+                    <div class="text-xs text-slate-400">Mt CO2 eşd.</div>
+                </div>
+            </div>
+
+            <!-- Supply & CO2 Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-1 serif text-lg">Enerji Arzı ve CO2 İlişkisi (Tablo 9)</h3>
+                    <p class="text-xs text-slate-500 mb-2">Sol Eksen: Enerji Arzı (Exajoule) | Sağ Eksen: Emisyon (Mt)
+                    </p>
+                    <div class="chart-container h-64"><canvas id="chartMacroSupply"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-1 serif text-lg">Sektörel Tüketim Dağılımı (Tablo 12)</h3>
+                    <p class="text-xs text-slate-500 mb-2">Seçili yılın sektörel tüketim payları.</p>
+                    <div class="chart-container h-64"><canvas id="chartMacroSectorPie"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Sectoral Trend -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-800 mb-1 serif text-lg">Sektörel Tüketim Trendi (2000-2024)</h3>
+                <div class="chart-container h-72"><canvas id="chartMacroSectorTrend"></canvas></div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg border border-orange-100 text-sm">
+                <h4 class="font-bold text-orange-900 mb-1">Dönemsel Politik Bağlam (Tablo 30 Özeti)</h4>
+                <p id="context-macro" class="text-orange-800">Veri yükleniyor...</p>
+            </div>
+
+            <!-- Renewable Details Table -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-emerald-500">
+                <h3 class="font-bold text-slate-800 mb-4 serif text-lg">Yenilenebilir Enerji Arz Analizi (Tablo 9 Detay)
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="chart-container h-80"><canvas id="chartRenewableSupply"></canvas></div>
+                    </div>
+                    <div class="lg:col-span-1 flex flex-col h-80">
+                        <div
+                            class="bg-emerald-50 p-2 text-xs font-bold text-emerald-900 border-b border-emerald-100 rounded-t-lg grid grid-cols-3 gap-1">
+                            <span>Yıl</span><span class="text-right">Miktar (EJ)</span><span class="text-right">Pay
+                                (%)</span>
+                        </div>
+                        <div
+                            class="overflow-x-auto custom-scroll border rounded-b-lg border-slate-200 flex-grow bg-white">
+                            <table class="min-w-full divide-y divide-slate-200 text-xs">
+                                <tbody class="bg-white divide-y divide-slate-200" id="renew-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ELECTRICITY TAB -->
+        <div id="tab-elec" class="tab-pane w-full hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Kurulu Güç (MW)</div>
+                    <div class="text-xl font-bold text-indigo-600" id="elec-cap">--</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Toplam Üretim (GWh)</div>
+                    <div class="text-xl font-bold text-indigo-600" id="elec-gen">--</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Yenilenebilir Payı</div>
+                    <div class="text-xl font-bold text-emerald-600" id="elec-renew">--%</div>
+                    <div class="text-[10px] text-slate-400">Üretim İçindeki Payı</div>
+                </div>
+            </div>
+
+            <!-- Charts Stacked for Full Width -->
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 serif text-xl">Kurulu Güç ve Üretim Dengesi</h3>
+                    <div class="chart-container h-96"><canvas id="chartElecMix"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 serif text-xl">Yenilenebilir Kaynak Gelişimi (TWh)</h3>
+                    <div class="chart-container h-80"><canvas id="chartElecRenew"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Table 13 Detailed Analysis -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+                <h3 class="font-bold text-slate-800 serif text-lg mb-4">Toplam İçindeki Yenilenebilir Payı (Tablo 13)
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="chart-container h-96"><canvas id="chartTablo13Renew"></canvas></div>
+                    </div>
+                    <div class="lg:col-span-1 flex flex-col h-96">
+                        <div
+                            class="bg-indigo-50 p-2 text-[10px] font-bold text-indigo-900 border-b border-indigo-100 rounded-t-lg grid grid-cols-3 gap-1 text-center">
+                            <span>Yıl</span><span>Kap. Payı</span><span>Üret. Payı</span>
+                        </div>
+                        <div
+                            class="overflow-y-auto custom-scroll border-x border-b border-slate-200 rounded-b-lg flex-grow bg-white">
+                            <table class="min-w-full text-xs">
+                                <tbody id="tablo13-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. FOSSIL TAB -->
+        <div id="tab-fossil" class="tab-pane w-full hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm group">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Toplam Petrol Arzı</div>
+                    <div class="text-2xl font-bold text-slate-800"><span id="kpi-oil-supply">--</span> <span
+                            class="text-sm font-normal text-slate-500">Bin Ton</span></div>
+                    <div class="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+                        <div id="bar-oil-ratio" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 mt-1 font-bold">Yerlilik: %<span
+                            id="txt-oil-ratio">--</span></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm group">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Toplam Doğalgaz Arzı</div>
+                    <div class="text-2xl font-bold text-slate-800"><span id="kpi-gas-supply">--</span> <span
+                            class="text-sm font-normal text-slate-500">Milyar m³</span></div>
+                    <div class="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+                        <div id="bar-gas-ratio" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 mt-1 font-bold">Yerlilik: %<span
+                            id="txt-gas-ratio">--</span></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm group">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Toplam Kömür Arzı</div>
+                    <div class="text-2xl font-bold text-slate-800"><span id="kpi-coal-supply">--</span> <span
+                            class="text-sm font-normal text-slate-500">Bin Ton</span></div>
+                    <div class="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+                        <div id="bar-coal-ratio" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="text-[10px] text-emerald-600 mt-1 font-bold">Yerlilik: %<span
+                            id="txt-coal-ratio">--</span></div>
+                </div>
+            </div>
+
+            <!-- Fossil Tab: Stacked Oil & Gas, Grid for Coal/LNG -->
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 serif text-xl mb-4">Petrol Dengesi (Tablo 18)</h3>
+                    <div class="chart-container h-96"><canvas id="chartFossilOil"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 serif text-xl mb-4">Doğalgaz Dengesi (Tablo 21)</h3>
+                    <div class="chart-container h-96"><canvas id="chartFossilGas"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 serif text-lg mb-4">Kömür Dengesi (Tablo 23)</h3>
+                        <div class="chart-container h-80"><canvas id="chartFossilCoal"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 serif text-lg mb-4">Doğalgaz İthalat Yöntemi (Tablo 22)</h3>
+                        <div class="chart-container h-80"><canvas id="chartLNG"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. GEOPOLITICS TAB -->
+        <div id="tab-geo" class="tab-pane w-full hidden space-y-6">
+            <!-- Dependency KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-red-100 shadow-sm">
+                    <div class="text-xs text-red-500 font-bold uppercase">Doğalgaz Baskın Tedarikçi</div>
+                    <div class="text-xl font-bold text-slate-800 mt-1" id="kpi-geo-gas-name">--</div>
+                    <div class="text-3xl font-bold text-red-600 my-1" id="kpi-geo-gas-share">--%</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Petrol Baskın Tedarikçi</div>
+                    <div class="text-xl font-bold text-slate-800 mt-1" id="kpi-geo-oil-name">--</div>
+                    <div class="text-3xl font-bold text-slate-700 my-1" id="kpi-geo-oil-share">--%</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Kömür Baskın Tedarikçi</div>
+                    <div class="text-xl font-bold text-slate-800 mt-1" id="kpi-geo-coal-name">--</div>
+                    <div class="text-3xl font-bold text-slate-700 my-1" id="kpi-geo-coal-share">--%</div>
+                </div>
+            </div>
+
+            <!-- Country Interactive -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+                    <h3 class="font-bold text-slate-800 serif text-lg">🌍 Ülke Bazlı İthalat Analizi</h3>
+                    <div class="flex items-center gap-2 mt-4 sm:mt-0">
+                        <select id="countrySelect" onchange="updateGeoCountryChart()"
+                            class="bg-slate-50 border border-slate-300 text-sm rounded-lg p-2">
+                            <option value="russia">Rusya Federasyonu</option>
+                            <option value="iran">İran</option>
+                            <option value="aze">Azerbaycan</option>
+                            <option value="iraq">Irak</option>
+                            <option value="kazakh">Kazakistan</option>
+                            <option value="algeria">Cezayir</option>
+                            <option value="usa">ABD</option>
+                            <option value="colombia">Kolombiya</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container h-[450px]"><canvas id="chartGeoCountryFocus"></canvas></div>
+                <p class="text-xs text-center text-slate-400 mt-2" id="country-desc">Seçili ülkenin Türkiye'ye sağladığı
+                    enerji miktarları.</p>
+            </div>
+
+            <!-- Breakdown Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-2 text-sm uppercase">Doğalgaz Pazar Payları (%)</h3>
+                    <div class="chart-container h-64"><canvas id="chartGeoGasShare"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-2 text-sm uppercase">Petrol Pazar Payları (%)</h3>
+                    <div class="chart-container h-64"><canvas id="chartGeoOilShare"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-2 text-sm uppercase">Kömür Pazar Payları (%)</h3>
+                    <div class="chart-container h-64"><canvas id="chartGeoCoalShare"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. INDICES TAB -->
+        <div id="tab-indices" class="tab-pane w-full hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">HHI Skoru</div>
+                    <div class="text-2xl font-bold text-red-600" id="kpi-hhi-score">--</div>
+                    <div class="text-[10px] text-slate-400">Pazar Yoğunlaşması (Düşük=İyi)</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">SWI Skoru</div>
+                    <div class="text-2xl font-bold text-emerald-600" id="kpi-swi-score">--</div>
+                    <div class="text-[10px] text-slate-400">Çeşitlilik Endeksi (Yüksek=İyi)</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <div class="text-xs text-slate-500 font-bold uppercase">Enerji Verimliliği</div>
+                    <div class="text-2xl font-bold text-blue-600" id="kpi-intensity-score">--</div>
+                    <div class="text-[10px] text-slate-400">Enerji Yoğunluğu (2000=100)</div>
+                </div>
+            </div>
+
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-xl serif mb-4">Pazar Yoğunlaşma Endeksi (HHI)</h3>
+                    <div class="chart-container h-80"><canvas id="chartHHI"></canvas></div>
+                    <div class="mt-4 p-3 bg-slate-50 rounded text-sm text-slate-600" id="txt-hhi">Veri yükleniyor...
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-xl serif mb-4">Kaynak Çeşitlilik Endeksi (SWI)</h3>
+                    <div class="chart-container h-80"><canvas id="chartSWI"></canvas></div>
+                    <div class="mt-4 p-3 bg-slate-50 rounded text-sm text-slate-600" id="txt-swi">Veri yükleniyor...
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-blue-500">
+                <h3 class="font-bold text-slate-800 text-xl serif mb-4">Enerji Verimliliği (Yoğunluk) Analizi</h3>
+                <div class="chart-container h-80"><canvas id="chartMacroEfficiency"></canvas></div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-auto py-8 text-center text-xs text-slate-400">Veri Kaynağı:
+        Fatih YILDIRIM (2025) Doktora Tezi</footer>
+
+    <script src="assets/js/script.js"></script>
+</body>
+
+</html>
